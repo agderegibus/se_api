@@ -7,7 +7,6 @@ import time
 import dataframe_image as dfi
 from PIL import Image
 from datetime import datetime
-from cim_to_id import cim_to_id as cmm
 import random
 
 

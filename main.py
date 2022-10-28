@@ -1,3 +1,5 @@
+from os import device_encoding
+from unittest import case
 from fastapi import FastAPI
 from tokenize import triple_quoted
 import requests 
@@ -8,6 +10,12 @@ import dataframe_image as dfi
 from PIL import Image
 from datetime import datetime
 import random
+from pydantic import BaseSettings
+
+class Settings(BaseSettings):
+    URL = "riskzone.anywhereportfolio.com.ar:9099"
+
+settings = Settings()
 
 
 
@@ -47,14 +55,7 @@ async def root():
     print("Espere un segundo...")
     time.sleep(0.5)
 
-    # %% [markdown]
-    # ## MOTOR DE EXTRACCIONES
-
-    # %% [markdown]
-    # ### BUSCAR TODOS LOS ALYC CON SE
-
-    # %%
-    URL_GENERAL = "https://riskzone.anywhereportfolio.com.ar:9099/api/solicitudextraccion/"+token+"/getsolicitudextraccionbyalyc?CurrentPage=1&ItemsPerPage=100"
+    URL_GENERAL = f"https://{settings.URL}/api/solicitudextraccion/{token}/getsolicitudextraccionbyalyc?CurrentPage=1&ItemsPerPage=100"
     tokenobj = {'key': 'value'}
     REQUEST_GENERAL = requests.get(URL_GENERAL, json = tokenobj)
     data  = (REQUEST_GENERAL.json())
@@ -65,15 +66,11 @@ async def root():
     DATAFINAL = pd.DataFrame()
     DATAFINALPORCIM = pd.DataFrame()
 
-    # %% [markdown]
-    # ## LOOP PARA BUSCAR POR CIM Y LUEGO DENTRO DE LA INFO DE CADA CIM Y LUEGO POR FINALIDAD
-
-    # %%
     for alyc in listaalycs:
 
         listacim = []
         aloc = str(alyc)
-        URL_PORALYC = "https://riskzone.anywhereportfolio.com.ar:9099/api/solicitudextraccion/"+token+"/getsolicitudextraccionbycim?AlycID="+aloc
+        URL_PORALYC = f"https://{settings.URL}/api/solicitudextraccion/{token}/getsolicitudextraccionbycim?AlycID="+aloc
         #tokenobj = {'key': 'value'}
         try:
             PORCIM = requests.get(URL_PORALYC)#, json = tokenobj)
@@ -88,19 +85,19 @@ async def root():
             pass
         #SEGUNDO LOOP
         for CIMID in listacim:
-             URL_PORCIM = "https://riskzone.anywhereportfolio.com.ar:9099/api/solicitudextraccion/"+token+"/getsolicitudextraccionbyneteo?AlycID="+aloc+"&CimID="+str(CIMID)
+             URL_PORCIM = f"https://{settings.URL}/api/solicitudextraccion/{token}/getsolicitudextraccionbyneteo?AlycID={aloc}&CimID="+str(CIMID)
              y = requests.get(URL_PORCIM, json = tokenobj)
              SE  = (y.json())
              SE = (pd.DataFrame(SE))
              DATAFINALPORCIM = pd.concat([DATAFINALPORCIM, SE])
              for ID in SE["CuentaNeteoID"]:
             #esto trae solo las que son finalidad 2 (margenes), hay que agregar que tamben traiga las de FCGIM
-                URL_PORFINALIDAD2 = "https://riskzone.anywhereportfolio.com.ar:9099/api/solicitudextraccion/"+token+"/getsolicitudextraccionbymensajes?AlycID="+aloc+"&CimID="+str(CIMID)+"&neteoID="+str(ID)+"&finalidadID=2"
+                URL_PORFINALIDAD2 = f"https://{settings.URL}/api/solicitudextraccion/{token}/getsolicitudextraccionbymensajes?AlycID={aloc}&CimID="+str(CIMID)+"&neteoID="+str(ID)+"&finalidadID=2"
                 finalidad2 = requests.get(URL_PORFINALIDAD2, json = tokenobj)
                 PORFINALIDAD  = (finalidad2.json())
                 PORFINALIDAD = (pd.DataFrame(PORFINALIDAD))
                 DATAFINAL = pd.concat([DATAFINAL, PORFINALIDAD])
-                URL_PORFINALIDAD9 = "https://riskzone.anywhereportfolio.com.ar:9099/api/solicitudextraccion/"+token+"/getsolicitudextraccionbymensajes?AlycID="+aloc+"&CimID="+str(CIMID)+"&neteoID="+str(ID)+"&finalidadID=9"
+                URL_PORFINALIDAD9 = f"https://{settings.URL}/api/solicitudextraccion/{token}/getsolicitudextraccionbymensajes?AlycID={aloc}&CimID="+str(CIMID)+"&neteoID="+str(ID)+"&finalidadID=9"
                 finalidad9 = requests.get(URL_PORFINALIDAD9, json = tokenobj)
                 PORFINALIDAD  = (finalidad9.json())
                 PORFINALIDAD = (pd.DataFrame(PORFINALIDAD))
@@ -112,8 +109,8 @@ async def root():
     IDS = IDS.reset_index()
     #IDS["Cuenta"] = IDS["Cuenta"].astype("str")
 
-
-    url = "https://rm4api.testing.acsa:8099/api/cuentas/getcuentacompensacion"
+#CUANDO ESTO PASE A PROD, CAMBIAR rm4api.testing.acsa:8099 POR {settings.URL}
+    url = f"https://rm4api.testing.acsa:8099/api/cuentas/getcuentacompensacion"
     df = requests.get(url, verify=False)
     data_cuentas  = (df.json())
     data_cuentas = pd.DataFrame(data_cuentas)
@@ -214,7 +211,7 @@ async def root():
 
     def saldoreal(alyc, cim, neteo, finalidad):
         tokenobj = {"key":"value"}
-        ENDPOINT = f"https://riskzone.anywhereportfolio.com.ar:9099/api/saldosconsolidados?MCId={alyc}&CelID={cim}&NeteoID={neteo}&FinalidadID={finalidad}"
+        ENDPOINT = f"https://{settings.URL}/api/saldosconsolidados?MCId={alyc}&CelID={cim}&NeteoID={neteo}&FinalidadID={finalidad}"
         q = requests.get(ENDPOINT, json = tokenobj)
         SALDOREAL  = (q.json())
         SALDOREAL = pd.DataFrame(SALDOREAL)
@@ -249,7 +246,7 @@ async def root():
             e = {'SaldoInicial':'sum', 'MargenRequeridoTotal':'sum'}
 
             tokenobj = {'key': 'value'}
-            URLSALDO = f"https://riskzone.anywhereportfolio.com.ar:9099/api/saldosconsolidados?MCId={ALYCID}&CelID={PROPA}"
+            URLSALDO = f"https://{settings.URL}/api/saldosconsolidados?MCId={ALYCID}&CelID={PROPA}"
             q = requests.get(URLSALDO, json = tokenobj)
             SALDOALYC  = (q.json())
             SALDOALYC = pd.DataFrame(SALDOALYC)
@@ -278,7 +275,7 @@ async def root():
 
 
         tokenobj = {"key":"value"}
-        ENDPOINT = f"https://riskzone.anywhereportfolio.com.ar:9099/api/saldosconsolidados?MCId={ALYCID}&CelID={CIM}&NeteoID={NETEO}&FinalidadID={FINALIDAD}"
+        ENDPOINT = f"https://{settings.URL}/api/saldosconsolidados?MCId={ALYCID}&CelID={CIM}&NeteoID={NETEO}&FinalidadID={FINALIDAD}"
         H = requests.get(ENDPOINT, json = tokenobj)
         SALDOREAL  = (H.json())
         SALDOREAL = pd.DataFrame(SALDOREAL)
@@ -440,6 +437,6 @@ async def root():
 
     DATA2.to_json("json_records.json",orient="records")
 
-    with open('EXPORTFINAL.json', 'r') as f:
+    with open('json_records.json', 'r') as f:
         data = json.load(f)
     return(data)

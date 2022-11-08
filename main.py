@@ -109,8 +109,7 @@ async def root():
     IDS = IDS.reset_index()
     #IDS["Cuenta"] = IDS["Cuenta"].astype("str")
 
-#CUANDO ESTO PASE A PROD, CAMBIAR rm4api.testing.acsa:8099 POR {settings.URL}
-    url = f"https://rm4api.testing.acsa:8099/api/cuentas/getcuentacompensacion"
+    url = f"https://{settings.URL}/api/cuentas/getcuentacompensacion"
     df = requests.get(url, verify=False)
     data_cuentas  = (df.json())
     data_cuentas = pd.DataFrame(data_cuentas)

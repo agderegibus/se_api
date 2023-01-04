@@ -330,7 +330,7 @@ async def root():
         FCI = "FCI"
         cimcod = str(DATAFINAL.CimCodigo[i])
 
-
+ 
 
 
         if primeranalisis >= 0:

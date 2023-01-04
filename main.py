@@ -317,6 +317,8 @@ async def root():
     elif ventana == "2":
         DATAFINAL["PRIMER_ANALISIS"] = DATAFINAL["Saldo POSTA"] + DATAFINAL["MargenDelDia"] + DATAFINAL["Monto"] +DATAFINAL["Ingresos Verificados"]
 
+    propiass = data_cuentas[data_cuentas.TipoCuentaCompensacionDescripcion == "Propia"]
+    propiass = list(propiass.CuentaCompensacionCodigo)
 
     tipodeaprobacion = []
     for i in range(len(DATAFINAL)):
@@ -326,6 +328,8 @@ async def root():
         noverificado = int(DATAFINAL["NoVerificado"][i])
         activo = DATAFINAL["ActivoDescripcion"][i]
         FCI = "FCI"
+        cimcod = str(DATAFINAL.CimCodigo[i])
+
 
 
 
@@ -334,7 +338,7 @@ async def root():
         else:
             if primeranalisis + saldoalyc >= 0:
                 aprobacion = 3
-                #print(primeranalisis + saldoalyc)
+            #print(primeranalisis + saldoalyc)
             else:
                 if primeranalisis + noverificado >= 0:
                     aprobacion = 2
@@ -345,6 +349,9 @@ async def root():
                 aprobacion = 4
         elif ventana == str(1):
             pass
+    
+        if aprobacion == 3 and cimcod in(propiass):
+            aprobacion = 5
 
         tipodeaprobacion.append(aprobacion)
 

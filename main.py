@@ -440,9 +440,11 @@ async def root():
     DATA2["CuentaCompensacionCodigoPropia"] = DATA2["CuentaCompensacionCodigoPropia"].astype("str")
     DATA2["Resultado"] = DATA2["Resultado"].astype("str")
 
-
-    DATA2.to_json("json_records.json",orient="records")
-
-    with open('json_records.json', 'r') as f:
-        data = json.load(f)
+    data = DATA2.to_json(orient="records")
+    
     return(data)
+    #DATA2.to_json("json_records.json",orient="records")
+
+    #with open('json_records.json', 'r') as f:
+    #    data = json.load(f)
+    #return(data)
